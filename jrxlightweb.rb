@@ -11,7 +11,9 @@ module JrxlightWeb
   import org.xlightweb.HttpUtils
 
   import java.lang.System
-
+  
+  CLIENT = HttpClient.new
+  
   %w(request response).each do |f|
     require File.join('lib',f)
   end
@@ -20,8 +22,8 @@ module JrxlightWeb
     Request.get(:url => url, :headers => headers, :callable=>callable, &block)
   end
 
-  def self.post(url, payload, headers={}, &block)
-    Request.post(:url => url, :payload => payload, :headers => headers, &block)
+  def self.post(url, payload, headers={}, callable=nil, &block)
+    Request.post(:url => url, :payload => payload, :headers => headers, :callable=>callable, &block)
   end
 
   def self.put(url, payload, headers={}, &block)
