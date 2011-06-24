@@ -3,25 +3,28 @@ module JrxlightWeb
   MIME_MAP = HttpUtils.get_mime_type_mapping
 
   class Request
+    def self.snap_time(start)
+      ((System.nanoTime - start)/1_000)/1000.0
+    end
 
     def self.get(opts,&blk)
       url,headers,callable = opts.values_at(:url,:headers,:callable)
-      
+
       req = GetRequest.new(url)
       ret = nil
       process_headers(headers).each{ |key,val| req.set_header(key,val) }
       st = System.nanoTime
-      
+
       if block_given?
         resp = CLIENT.send(req,&blk)
-        puts "time-asyn: #{(System.nanoTime - st)/1_000_000} ms"
+        puts "time-asyn: #{snap_time(st)} ms"
       elsif callable
         resp = CLIENT.send(req,callable)
-        puts "time-lamb: #{(System.nanoTime - st)/1_000_000} ms"
+        puts "time-lamb: #{snap_time(st)} ms"
       else
         resp = CLIENT.call(req)
         ret = resp.get_body.read_string
-        puts "time-sync: #{(System.nanoTime - st)/1_000_000} ms"
+        puts "time-sync: #{snap_time(st)} ms"
       end
       ret
     end
@@ -33,18 +36,18 @@ module JrxlightWeb
       end
       ret = nil
       process_headers(headers).each{ |key,val| req.set_header(key,val) }
-      
+
       st = System.nanoTime
       if block_given?
         resp = CLIENT.send(req,&blk)
-        puts "time-asyn: #{(System.nanoTime - st)/1_000_000} ms"
+        puts "time-asyn: #{snap_time(st)} ms"
       elsif callable
         resp = CLIENT.send(req,callable)
-        puts "time-lamb: #{(System.nanoTime - st)/1_000_000} ms"
+        puts "time-lamb: #{snap_time(st)} ms"
       else
         resp = CLIENT.call(req)
         ret = resp.get_body.read_string
-        puts "time-sync: #{(System.nanoTime - st)/1_000_000} ms"
+        puts "time-sync: #{snap_time(st)} ms"
       end
       ret
     end
