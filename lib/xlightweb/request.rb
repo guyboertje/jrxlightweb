@@ -3,30 +3,53 @@ module JrxlightWeb
   MIME_MAP = HttpUtils.get_mime_type_mapping
 
   class Request
+    def self.snap_time(start)
+      ((System.nanoTime - start)/1_000)/1000.0
+    end
 
     def self.get(opts,&blk)
       url,headers,callable = opts.values_at(:url,:headers,:callable)
-      client = HttpClient.new
+
       req = GetRequest.new(url)
       ret = nil
       process_headers(headers).each{ |key,val| req.set_header(key,val) }
       st = System.nanoTime
-      if block_given?
-        resp = client.send(req,&blk)
-        puts "time-blok: #{(System.nanoTime - st)/1_000_000} ms"
-      elsif callable
-        resp = client.send(req,callable)
-        puts "time-call: #{(System.nanoTime - st)/1_000_000} ms"
-      else
-        resp = client.call(req)
-        ret = resp.get_body.read_string
-        puts "time-nblk: #{(System.nanoTime - st)/1_000_000} ms"
-      end
 
-      client.close
+      if block_given?
+        resp = CLIENT.send(req,&blk)
+        puts "time-asyn: #{snap_time(st)} ms"
+      elsif callable
+        resp = CLIENT.send(req,callable)
+        puts "time-lamb: #{snap_time(st)} ms"
+      else
+        resp = CLIENT.call(req)
+        ret = resp.get_body.read_string
+        puts "time-sync: #{snap_time(st)} ms"
+      end
       ret
     end
     def self.post(opts,&blk)
+      url,headers,payload,callable = opts.values_at(:url,:headers,:payload,:callable)
+      req = PostRequest.new(url,"application/x-www-form-urlencoded")
+      payload.each do |key,value|
+        req.set_parameter(key, value)
+      end
+      ret = nil
+      process_headers(headers).each{ |key,val| req.set_header(key,val) }
+
+      st = System.nanoTime
+      if block_given?
+        resp = CLIENT.send(req,&blk)
+        puts "time-asyn: #{snap_time(st)} ms"
+      elsif callable
+        resp = CLIENT.send(req,callable)
+        puts "time-lamb: #{snap_time(st)} ms"
+      else
+        resp = CLIENT.call(req)
+        ret = resp.get_body.read_string
+        puts "time-sync: #{snap_time(st)} ms"
+      end
+      ret
     end
     def self.put(opts,&blk)
     end
